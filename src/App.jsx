@@ -9,6 +9,7 @@ import '@xyflow/react/dist/style.css';
 
 import { auth, googleProvider } from './firebase';
 import { signInWithPopup, signOut } from 'firebase/auth';
+import { useUserTree } from './hook/useUserTree';
 
 const defaultNodes = [
   {
@@ -65,6 +66,10 @@ const hasStoredData = () => {
 };
 
 export default function App() {
+  // useUserTree 훅 사용
+  const { tree: firestoreTree, user: firestoreUser, loading } = useUserTree();
+  
+  // 기존 상태들
   const [user, setUser] = useState(null);
   const [nodes, setNodes] = useState(() =>
     hasStoredData() ? getFromStorage(STORAGE_KEYS.NODES, defaultNodes) : defaultNodes
@@ -78,6 +83,28 @@ export default function App() {
   const [lastSaved, setLastSaved] = useState(() =>
     localStorage.getItem(STORAGE_KEYS.LAST_SAVE)
   );
+
+  // Firestore 사용자와 기존 사용자 상태 동기화
+  useEffect(() => {
+    if (firestoreUser) {
+      setUser(firestoreUser);
+    }
+  }, [firestoreUser]);
+
+  // Firestore에서 트리 데이터 로드 (로컬 스토리지가 없을 때)
+  useEffect(() => {
+    if (!loading && firestoreTree && !hasStoredData()) {
+      // Firestore에서 트리 데이터를 React Flow 형식으로 변환
+      if (firestoreTree.nodes && firestoreTree.edges) {
+        setNodes(firestoreTree.nodes);
+        setEdges(firestoreTree.edges);
+        if (firestoreTree.nextId) {
+          setNextId(firestoreTree.nextId);
+        }
+        console.log('✅ Firestore에서 트리 데이터 로드 완료');
+      }
+    }
+  }, [loading, firestoreTree]);
 
   const saveData = useCallback((newNodes, newEdges, newNextId) => {
     const success1 = saveToStorage(STORAGE_KEYS.NODES, newNodes);
@@ -230,6 +257,8 @@ export default function App() {
       console.error('❌ 로그아웃 실패:', error);
     }
   };
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <>
