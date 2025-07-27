@@ -11,22 +11,8 @@ import { auth, googleProvider } from './firebase';
 import { signInWithPopup, signOut } from 'firebase/auth';
 import { useUserTree } from './hook/useUserTree';
 
-const defaultNodes = [
-  {
-    id: '1',
-    position: { x: 250, y: 100 },
-    data: { label: '이방인' },
-    style: { border: '2px solid #999' },
-  },
-  {
-    id: '2',
-    position: { x: 500, y: 200 },
-    data: { label: '스토너' },
-    style: { border: '2px solid #999' },
-  },
-];
-
-const defaultEdges = [{ id: '1-2', source: '1', target: '2' }];
+const defaultNodes = [];
+const defaultEdges = [];
 
 const STORAGE_KEYS = {
   NODES: 'lined-nodes-v1',
