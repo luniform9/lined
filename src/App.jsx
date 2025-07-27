@@ -58,6 +58,9 @@ export default function App() {
   const [lastSaved, setLastSaved] = useState(() =>
     localStorage.getItem(STORAGE_KEYS.LAST_SAVE)
   );
+  
+  // 다크모드 감지
+  const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
   useEffect(() => {
     if (firestoreUser) setUser(firestoreUser);
@@ -123,15 +126,20 @@ export default function App() {
         prev.map((n) => ({
           ...n,
           style: {
-            border:
-              n.id === node.id && selectedNodeId !== node.id
-                ? '2px solid #FF5252'
-                : '2px solid #999',
+            border: isDarkMode ? '2px solid #666' : '2px solid #999',
+            backgroundColor: n.id === node.id && selectedNodeId !== node.id 
+              ? (isDarkMode ? '#404040' : '#e0e0e0') 
+              : (isDarkMode ? '#2d2d2d' : '#ffffff'),
+            color: isDarkMode ? '#ffffff' : '#000000',
+            padding: '8px',
+            borderRadius: '4px',
+            fontSize: '14px',
+            fontWeight: '500',
           },
         }))
       );
     },
-    [selectedNodeId]
+    [selectedNodeId, isDarkMode]
   );
 
   const createNewNode = (label) => ({
@@ -141,7 +149,15 @@ export default function App() {
       y: 100 + (nextId % 5) * 80,
     },
     data: { label },
-    style: { border: '2px solid #999' },
+    style: { 
+      border: isDarkMode ? '2px solid #666' : '2px solid #999',
+      backgroundColor: isDarkMode ? '#2d2d2d' : '#ffffff',
+      color: isDarkMode ? '#ffffff' : '#000000',
+      padding: '8px',
+      borderRadius: '4px',
+      fontSize: '14px',
+      fontWeight: '500',
+    },
   });
 
   const findNodeByLabel = (label) =>
