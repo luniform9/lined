@@ -41,27 +41,37 @@
   color: #888;
 }
 
-/* React Flow 노드 다크모드 스타일 */
-.react-flow__node {
+/* React Flow 노드 다크모드 스타일 - 강력한 선택자 */
+.react-flow__node,
+.react-flow__node-default,
+.react-flow__node[data-testid*="node"],
+.react-flow__node div {
   background-color: #2d2d2d !important;
   color: #ffffff !important;
   border: 2px solid #666 !important;
 }
 
-.react-flow__node.selected {
+.react-flow__node.selected,
+.react-flow__node.selected div {
   background-color: #404040 !important;
   border-color: #888 !important;
 }
 
 /* 다크모드에서만 적용 */
 @media (prefers-color-scheme: dark) {
-  .react-flow__node {
+  .react-flow__node,
+  .react-flow__node-default,
+  .react-flow__node[data-testid*="node"],
+  .react-flow__node div,
+  .react-flow__node * {
     background-color: #2d2d2d !important;
     color: #ffffff !important;
     border: 2px solid #666 !important;
   }
   
-  .react-flow__node.selected {
+  .react-flow__node.selected,
+  .react-flow__node.selected div,
+  .react-flow__node.selected * {
     background-color: #404040 !important;
     border-color: #888 !important;
   }
@@ -69,13 +79,17 @@
 
 /* 라이트모드에서만 적용 */
 @media (prefers-color-scheme: light) {
-  .react-flow__node {
+  .react-flow__node,
+  .react-flow__node-default,
+  .react-flow__node[data-testid*="node"],
+  .react-flow__node div {
     background-color: #ffffff !important;
     color: #000000 !important;
     border: 2px solid #999 !important;
   }
   
-  .react-flow__node.selected {
+  .react-flow__node.selected,
+  .react-flow__node.selected div {
     background-color: #e0e0e0 !important;
     border-color: #999 !important;
   }
