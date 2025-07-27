@@ -40,3 +40,43 @@
 .read-the-docs {
   color: #888;
 }
+
+/* React Flow 노드 다크모드 스타일 */
+.react-flow__node {
+  background-color: #2d2d2d !important;
+  color: #ffffff !important;
+  border: 2px solid #666 !important;
+}
+
+.react-flow__node.selected {
+  background-color: #404040 !important;
+  border-color: #888 !important;
+}
+
+/* 다크모드에서만 적용 */
+@media (prefers-color-scheme: dark) {
+  .react-flow__node {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+    border: 2px solid #666 !important;
+  }
+  
+  .react-flow__node.selected {
+    background-color: #404040 !important;
+    border-color: #888 !important;
+  }
+}
+
+/* 라이트모드에서만 적용 */
+@media (prefers-color-scheme: light) {
+  .react-flow__node {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #999 !important;
+  }
+  
+  .react-flow__node.selected {
+    background-color: #e0e0e0 !important;
+    border-color: #999 !important;
+  }
+}
