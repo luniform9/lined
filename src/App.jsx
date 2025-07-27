@@ -1,3 +1,4 @@
+// App.jsx
 import { useState, useCallback, useEffect } from 'react';
 import {
   ReactFlow,
@@ -27,7 +28,6 @@ const getFromStorage = (key, defaultValue) => {
     const saved = localStorage.getItem(key);
     if (saved === null) return defaultValue;
     const parsed = JSON.parse(saved);
-    console.log(`✅ 불러오기 성공 [${key}]:`, parsed);
     return parsed;
   } catch (error) {
     console.warn(`❌ localStorage 읽기 실패 [${key}]:`, error);
@@ -40,7 +40,6 @@ const saveToStorage = (key, value) => {
     const serialized = JSON.stringify(value);
     localStorage.setItem(key, serialized);
     localStorage.setItem(STORAGE_KEYS.LAST_SAVE, new Date().toISOString());
-    console.log(`✅ 저장 성공 [${key}]:`, value);
     return true;
   } catch (error) {
     console.warn(`❌ localStorage 쓰기 실패 [${key}]:`, error);
@@ -48,15 +47,8 @@ const saveToStorage = (key, value) => {
   }
 };
 
-const hasStoredData = () => {
-  return localStorage.getItem(STORAGE_KEYS.NODES) !== null;
-};
-
 export default function App() {
-  // useUserTree 훅 사용
   const { tree: firestoreTree, user: firestoreUser, loading } = useUserTree();
-  
-  // 기존 상태들
   const [user, setUser] = useState(null);
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
@@ -67,11 +59,8 @@ export default function App() {
     localStorage.getItem(STORAGE_KEYS.LAST_SAVE)
   );
 
-  // Firestore 사용자와 기존 사용자 상태 동기화
   useEffect(() => {
-    if (firestoreUser) {
-      setUser(firestoreUser);
-    }
+    if (firestoreUser) setUser(firestoreUser);
   }, [firestoreUser]);
 
   useEffect(() => {
@@ -82,14 +71,29 @@ export default function App() {
     }
   }, [loading, firestoreTree]);
 
-  const saveData = useCallback((newNodes, newEdges, newNextId) => {
+  const saveData = useCallback(async (newNodes, newEdges, newNextId) => {
     const success1 = saveToStorage(STORAGE_KEYS.NODES, newNodes);
     const success2 = saveToStorage(STORAGE_KEYS.EDGES, newEdges);
     const success3 = saveToStorage(STORAGE_KEYS.NEXT_ID, newNextId);
+
+    if (user) {
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        await setDoc(userRef, {
+          nodes: newNodes,
+          edges: newEdges,
+          nextId: newNextId,
+        });
+        console.log('✅ Firestore에 저장됨');
+      } catch (e) {
+        console.error('❌ Firestore 저장 실패:', e);
+      }
+    }
+
     if (success1 && success2 && success3) {
       setLastSaved(new Date().toISOString());
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (nodes.length > 0) {
@@ -183,7 +187,7 @@ export default function App() {
     setSelectedNodeId(null);
   };
 
-  const clearAll = () => {
+  const clearAll = async () => {
     if (!user) {
       alert('로그인 후 삭제할 수 있습니다.');
       return;
@@ -191,16 +195,24 @@ export default function App() {
     if (window.confirm('모든 데이터를 삭제하시겠습니까?')) {
       setNodes(defaultNodes);
       setEdges(defaultEdges);
-      setNextId(3);
+      setNextId(1);
       setSelectedNodeId(null);
       Object.values(STORAGE_KEYS).forEach((key) => {
         localStorage.removeItem(key);
       });
       setLastSaved(null);
+      try {
+        await setDoc(doc(db, 'users', user.uid), {
+          nodes: [],
+          edges: [],
+          nextId: 1,
+        });
+        console.log('✅ Firestore 데이터 초기화 완료');
+      } catch (e) {
+        console.error('❌ Firestore 초기화 실패:', e);
+      }
     }
   };
-
-
 
   const formatLastSaved = (dateString) => {
     if (!dateString) return '없음';
@@ -211,7 +223,6 @@ export default function App() {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       setUser(result.user);
-      console.log('✅ 로그인 성공:', result.user);
     } catch (error) {
       console.error('❌ 로그인 실패:', error);
     }
@@ -221,7 +232,6 @@ export default function App() {
     try {
       await signOut(auth);
       setUser(null);
-      console.log('👋 로그아웃 완료');
     } catch (error) {
       console.error('❌ 로그아웃 실패:', error);
     }
@@ -242,31 +252,30 @@ export default function App() {
           fontSize: '14px',
         }}
       >
-       {user && (
-  <>
-    <input
-      type="text"
-      value={bookTitle}
-      onChange={(e) => setBookTitle(e.target.value)}
-      onKeyPress={(e) =>
-        e.key === 'Enter' &&
-        (selectedNodeId ? onAddNode() : onAddRootNode())
-      }
-      placeholder="책 제목을 입력하세요"
-      style={{ padding: 8, flex: '1 1 200px', minWidth: '200px' }}
-    />
-    <button onClick={onAddNode} disabled={!bookTitle.trim() || !selectedNodeId}>
-      선택한 노드에 연결
-    </button>
-    <button onClick={onAddRootNode} disabled={!bookTitle.trim()}>
-      📍 출발점 추가
-    </button>
-    <button onClick={clearAll} style={{ backgroundColor: '#ff4444', color: 'white' }}>
-      🗑️ 전체 삭제
-    </button>
-  </>
-)}
-
+        {user && (
+          <>
+            <input
+              type="text"
+              value={bookTitle}
+              onChange={(e) => setBookTitle(e.target.value)}
+              onKeyPress={(e) =>
+                e.key === 'Enter' &&
+                (selectedNodeId ? onAddNode() : onAddRootNode())
+              }
+              placeholder="책 제목을 입력하세요"
+              style={{ padding: 8, flex: '1 1 200px', minWidth: '200px' }}
+            />
+            <button onClick={onAddNode} disabled={!bookTitle.trim() || !selectedNodeId}>
+              선택한 노드에 연결
+            </button>
+            <button onClick={onAddRootNode} disabled={!bookTitle.trim()}>
+              📍 출발점 추가
+            </button>
+            <button onClick={clearAll} style={{ backgroundColor: '#ff4444', color: 'white' }}>
+              🗑️ 전체 삭제
+            </button>
+          </>
+        )}
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
           <div style={{ fontSize: '12px', color: '#666' }}>
