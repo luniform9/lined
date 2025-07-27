@@ -73,17 +73,49 @@ export default function App() {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
+  // 다크모드 변경 시 기존 노드들도 스타일 업데이트
+  useEffect(() => {
+    if (nodes.length > 0) {
+      const updatedNodes = nodes.map(node => ({
+        ...node,
+        style: {
+          backgroundColor: isDarkMode ? '#2d2d2d' : '#ffffff',
+          color: isDarkMode ? '#ffffff' : '#000000',
+          border: isDarkMode ? '2px solid #666' : '2px solid #999',
+          padding: '8px',
+          borderRadius: '4px',
+          fontSize: '14px',
+          fontWeight: '500',
+        }
+      }));
+      setNodes(updatedNodes);
+    }
+  }, [isDarkMode]);
+
   useEffect(() => {
     if (firestoreUser) setUser(firestoreUser);
   }, [firestoreUser]);
 
   useEffect(() => {
     if (!loading && firestoreTree) {
-      setNodes(firestoreTree.nodes || []);
+      const nodesWithDarkMode = (firestoreTree.nodes || []).map(node => ({
+        ...node,
+        style: {
+          backgroundColor: isDarkMode ? '#2d2d2d' : '#ffffff',
+          color: isDarkMode ? '#ffffff' : '#000000',
+          border: isDarkMode ? '2px solid #666' : '2px solid #999',
+          padding: '8px',
+          borderRadius: '4px',
+          fontSize: '14px',
+          fontWeight: '500',
+        }
+      }));
+      
+      setNodes(nodesWithDarkMode);
       setEdges(firestoreTree.edges || []);
       setNextId(firestoreTree.nextId || 1);
     }
-  }, [loading, firestoreTree]);
+  }, [loading, firestoreTree, isDarkMode]);
 
   const saveData = useCallback(async (newNodes, newEdges, newNextId) => {
     const success1 = saveToStorage(STORAGE_KEYS.NODES, newNodes);
