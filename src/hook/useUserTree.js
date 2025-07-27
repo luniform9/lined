@@ -5,7 +5,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
 // 관리자 UID (로그인 전에는 이 계정의 트리를 사용)
-const DEFAULT_UID = '3hYIqDcvFgVs6vYc9Gv4IE36AHW2';
+const DEFAULT_UID = 'lined-admin';
 
 export function useUserTree() {
   const [tree, setTree] = useState(null);

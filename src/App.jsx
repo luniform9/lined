@@ -200,18 +200,7 @@ export default function App() {
     }
   };
 
-  const manualSave = async () => {
-    if (!user) return;
 
-    const ref = doc(db, 'users', user.uid);
-    await setDoc(ref, {
-      nodes,
-      edges,
-      nextId,
-    });
-
-    alert('저장되었습니다!');
-  };
 
   const formatLastSaved = (dateString) => {
     if (!dateString) return '없음';
@@ -271,9 +260,6 @@ export default function App() {
     </button>
     <button onClick={onAddRootNode} disabled={!bookTitle.trim()}>
       📍 출발점 추가
-    </button>
-    <button onClick={manualSave} style={{ backgroundColor: '#4CAF50', color: 'white' }}>
-      💾 수동 저장
     </button>
     <button onClick={clearAll} style={{ backgroundColor: '#ff4444', color: 'white' }}>
       🗑️ 전체 삭제
