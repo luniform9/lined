@@ -7,8 +7,9 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { auth, googleProvider } from './firebase';
+import { auth, googleProvider, db } from './firebase';
 import { signInWithPopup, signOut } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { useUserTree } from './hook/useUserTree';
 
 const defaultNodes = [];
@@ -57,14 +58,10 @@ export default function App() {
   
   // 기존 상태들
   const [user, setUser] = useState(null);
-  const [nodes, setNodes] = useState(() =>
-    hasStoredData() ? getFromStorage(STORAGE_KEYS.NODES, defaultNodes) : defaultNodes
-  );
-  const [edges, setEdges] = useState(() =>
-    hasStoredData() ? getFromStorage(STORAGE_KEYS.EDGES, defaultEdges) : defaultEdges
-  );
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
   const [bookTitle, setBookTitle] = useState('');
-  const [nextId, setNextId] = useState(() => getFromStorage(STORAGE_KEYS.NEXT_ID, 3));
+  const [nextId, setNextId] = useState(1);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [lastSaved, setLastSaved] = useState(() =>
     localStorage.getItem(STORAGE_KEYS.LAST_SAVE)
@@ -77,18 +74,11 @@ export default function App() {
     }
   }, [firestoreUser]);
 
-  // Firestore에서 트리 데이터 로드 (로컬 스토리지가 없을 때)
   useEffect(() => {
-    if (!loading && firestoreTree && !hasStoredData()) {
-      // Firestore에서 트리 데이터를 React Flow 형식으로 변환
-      if (firestoreTree.nodes && firestoreTree.edges) {
-        setNodes(firestoreTree.nodes);
-        setEdges(firestoreTree.edges);
-        if (firestoreTree.nextId) {
-          setNextId(firestoreTree.nextId);
-        }
-        console.log('✅ Firestore에서 트리 데이터 로드 완료');
-      }
+    if (!loading && firestoreTree) {
+      setNodes(firestoreTree.nodes || []);
+      setEdges(firestoreTree.edges || []);
+      setNextId(firestoreTree.nextId || 1);
     }
   }, [loading, firestoreTree]);
 
@@ -210,13 +200,17 @@ export default function App() {
     }
   };
 
-  const manualSave = () => {
-    if (!user) {
-      alert('로그인 후 저장할 수 있습니다.');
-      return;
-    }
-    saveData(nodes, edges, nextId);
-    alert('데이터가 저장되었습니다!');
+  const manualSave = async () => {
+    if (!user) return;
+
+    const ref = doc(db, 'users', user.uid);
+    await setDoc(ref, {
+      nodes,
+      edges,
+      nextId,
+    });
+
+    alert('저장되었습니다!');
   };
 
   const formatLastSaved = (dateString) => {
