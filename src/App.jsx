@@ -12,6 +12,7 @@ import { auth, googleProvider, db } from './firebase';
 import { signInWithPopup, signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useUserTree } from './hook/useUserTree';
+import DirectionNode from './components/DirectionNode';
 
 const defaultNodes = [];
 const defaultEdges = [];
@@ -217,8 +218,15 @@ export default function App() {
     [selectedNodeId, isDarkMode]
   );
 
+  // nodeTypes 등록
+  const nodeTypes = {
+    directionNode: DirectionNode,
+  };
+
+  // createNewNode 함수에서 type: 'directionNode'로 생성
   const createNewNode = (label) => ({
     id: nextId.toString(),
+    type: 'directionNode',
     position: {
       x: 100 * nextId,
       y: 100 + (nextId % 5) * 80,
@@ -235,11 +243,25 @@ export default function App() {
     },
   });
 
-  const findNodeByLabel = (label) =>
-    nodes.find((node) => node.data.label === label);
-
-  const onAddNode = () => {
+  // onAddNode 함수 수정: direction 인자 추가
+  const onAddNode = (direction = 'down') => {
     if (!bookTitle.trim() || !selectedNodeId || !user) return;
+
+    const parentNode = nodes.find(n => n.id === selectedNodeId);
+    if (!parentNode) return;
+
+    let dx = 0, dy = 0, offset = 150;
+    let sourceHandle = 'bottom';
+    let targetHandle = 'top';
+    if (direction === 'up') {
+      dy = -offset;
+      sourceHandle = 'top';
+      targetHandle = 'bottom';
+    } else if (direction === 'down') {
+      dy = offset;
+      sourceHandle = 'bottom';
+      targetHandle = 'top';
+    }
 
     const existingNode = findNodeByLabel(bookTitle);
 
@@ -248,14 +270,24 @@ export default function App() {
         id: `${selectedNodeId}-${existingNode.id}`,
         source: selectedNodeId,
         target: existingNode.id,
+        sourceHandle,
+        targetHandle,
       };
       setEdges((prev) => [...prev, newEdge]);
     } else {
-      const newNode = createNewNode(bookTitle);
+      const newNode = {
+        ...createNewNode(bookTitle),
+        position: {
+          x: parentNode.position.x + dx,
+          y: parentNode.position.y + dy,
+        },
+      };
       const newEdge = {
         id: `${selectedNodeId}-${newNode.id}`,
         source: selectedNodeId,
         target: newNode.id,
+        sourceHandle,
+        targetHandle,
       };
       setNodes((prev) => [...prev, newNode]);
       setEdges((prev) => [...prev, newEdge]);
@@ -265,6 +297,9 @@ export default function App() {
     setBookTitle('');
   };
 
+  // onAddRootNode는 그대로 유지
+
+  // 기존 버튼 복원
   const onAddRootNode = () => {
     if (!bookTitle.trim() || !user) return;
 
@@ -348,6 +383,9 @@ export default function App() {
     }
   };
 
+  const findNodeByLabel = (label) =>
+    nodes.find((node) => node.data.label === label);
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -376,8 +414,11 @@ export default function App() {
               placeholder="책 제목을 입력하세요"
               style={{ padding: 8, flex: '1 1 200px', minWidth: '200px' }}
             />
-            <button onClick={onAddNode} disabled={!bookTitle.trim() || !selectedNodeId}>
-              선택한 노드에 연결
+            <button onClick={() => onAddNode('up')} disabled={!selectedNodeId}>
+              선택한 노드 위에 추가
+            </button>
+            <button onClick={() => onAddNode('down')} disabled={!selectedNodeId}>
+              선택한 노드 아래에 추가
             </button>
                 <button onClick={onAddRootNode} disabled={!bookTitle.trim()}>
       📍 출발점 추가
@@ -419,6 +460,7 @@ export default function App() {
           onConnect={onConnect}
           onNodeClick={onNodeClick}
           fitView
+          nodeTypes={nodeTypes}
         />
       </div>
     </>
