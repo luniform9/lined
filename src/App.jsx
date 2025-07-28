@@ -112,18 +112,6 @@ export default function App() {
     applyDarkModeStyles();
   }, [isDarkMode, nodes.length]);
 
-  // 키보드 단축키 지원
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Delete' && selectedNodeId && user) {
-        deleteSelectedNode();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNodeId, user]);
-
   useEffect(() => {
     if (firestoreUser) setUser(firestoreUser);
   }, [firestoreUser]);
@@ -278,26 +266,6 @@ export default function App() {
     setSelectedNodeId(null);
   };
 
-  const deleteSelectedNode = () => {
-    if (!selectedNodeId || !user) {
-      alert('삭제할 노드를 선택해주세요.');
-      return;
-    }
-    
-    if (window.confirm('선택한 노드를 삭제하시겠습니까?')) {
-      // 선택된 노드 삭제
-      setNodes(prev => prev.filter(node => node.id !== selectedNodeId));
-      
-      // 선택된 노드와 연결된 엣지들 삭제
-      setEdges(prev => prev.filter(edge => 
-        edge.source !== selectedNodeId && edge.target !== selectedNodeId
-      ));
-      
-      // 선택 상태 초기화
-      setSelectedNodeId(null);
-    }
-  };
-
   const clearAll = async () => {
     if (!user) {
       alert('로그인 후 삭제할 수 있습니다.');
@@ -379,19 +347,12 @@ export default function App() {
             <button onClick={onAddNode} disabled={!bookTitle.trim() || !selectedNodeId}>
               선택한 노드에 연결
             </button>
-                <button onClick={onAddRootNode} disabled={!bookTitle.trim()}>
-      📍 출발점 추가
-    </button>
-    <button 
-      onClick={deleteSelectedNode} 
-      disabled={!selectedNodeId}
-      style={{ backgroundColor: '#ff8800', color: 'white' }}
-    >
-      🗑️ 선택 노드 삭제
-    </button>
-    <button onClick={clearAll} style={{ backgroundColor: '#ff4444', color: 'white' }}>
-      🗑️ 전체 삭제
-    </button>
+            <button onClick={onAddRootNode} disabled={!bookTitle.trim()}>
+              📍 출발점 추가
+            </button>
+            <button onClick={clearAll} style={{ backgroundColor: '#ff4444', color: 'white' }}>
+              🗑️ 전체 삭제
+            </button>
           </>
         )}
 
