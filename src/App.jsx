@@ -90,7 +90,27 @@ export default function App() {
       }));
       setNodes(updatedNodes);
     }
-  }, [isDarkMode]);
+  }, [isDarkMode, nodes.length]);
+
+  // 컴포넌트 마운트 시와 다크모드 변경 시 강제로 노드 스타일 적용
+  useEffect(() => {
+    const applyDarkModeStyles = () => {
+      setTimeout(() => {
+        const nodeElements = document.querySelectorAll('.react-flow__node');
+        nodeElements.forEach(node => {
+          node.style.backgroundColor = isDarkMode ? '#2d2d2d' : '#ffffff';
+          node.style.color = isDarkMode ? '#ffffff' : '#000000';
+          node.style.border = isDarkMode ? '2px solid #666' : '2px solid #999';
+          node.style.padding = '8px';
+          node.style.borderRadius = '4px';
+          node.style.fontSize = '14px';
+          node.style.fontWeight = '500';
+        });
+      }, 100); // React Flow 렌더링 후 적용
+    };
+
+    applyDarkModeStyles();
+  }, [isDarkMode, nodes.length]);
 
   useEffect(() => {
     if (firestoreUser) setUser(firestoreUser);
